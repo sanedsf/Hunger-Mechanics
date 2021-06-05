@@ -47,7 +47,7 @@ public class HungermechanicsMod {
 			() -> PROTOCOL_VERSION, PROTOCOL_VERSION::equals, PROTOCOL_VERSION::equals);
 	private String sPenaltyString = null;
 	private int hunger = 0;
-	private final Config config = new Config();
+	private Config config = new Config();
 	private float newExhaustion;
 	private String[][] matrix;
 	public HungermechanicsMod() {
@@ -162,41 +162,42 @@ public class HungermechanicsMod {
         		hunger = 0;
         	}
         }
-        
-        if (event.phase == TickEvent.Phase.END) {
-        	Entity entity = event.player;
-        	BlockPos posBelow = entity.blockPosition().below();
-        	BlockState blockStateBelow = entity.level.getBlockState(posBelow);
-        	boolean found = false;
-        	int percent = 0;
-        	PlayerEntity ent = (PlayerEntity) event.player;
-        	ModifiableAttributeInstance attribute = ent.getAttribute(Attributes.MOVEMENT_SPEED);
-        	for (int row = 0; row < matrix.length; row++) {
-        		if(matrix[row][0].contains(blockStateBelow.getBlock().getRegistryName().toString())) {
-        			found = true;
-        			percent=row;
-        			break;
-        		}else {
-        			found = false;
+        if (this.config.gravity()){
+        	if (event.phase == TickEvent.Phase.END) {
+        		Entity entity = event.player;
+        		BlockPos posBelow = entity.blockPosition().below();
+        		BlockState blockStateBelow = entity.level.getBlockState(posBelow);
+        		boolean found = false;
+        		int percent = 0;
+        		PlayerEntity ent = (PlayerEntity) event.player;
+        		ModifiableAttributeInstance attribute = ent.getAttribute(Attributes.MOVEMENT_SPEED);
+        		for (int row = 0; row < matrix.length; row++) {
+        			if(matrix[row][0].contains(blockStateBelow.getBlock().getRegistryName().toString())) {
+        				found = true;
+        				percent=row;
+        				break;
+        			}else {
+        				found = false;
+        			}
         		}
-        	}
-        	if (found) {
-        		attribute.setBaseValue(0.1D*((100D-Double.valueOf(matrix[percent][1]))/100D));
-        	}
-        	else {
-        		if (slowplants.contains(entity.level.getBlockState(entity.blockPosition()).getMaterial())) {
-        			attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[1])))/100D);//50%
+        		if (found) {
+        			attribute.setBaseValue(0.1D*((100D-Double.valueOf(matrix[percent][1]))/100D));
         		}
         		else {
-        			if(slow1.contains(blockStateBelow.getMaterial())) {
-        				attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[2])))/100D);//10%
-        			}
-        			else if (slow2.contains(blockStateBelow.getMaterial())) {
-        				attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[3])))/100D);//35%
+        			if (slowplants.contains(entity.level.getBlockState(entity.blockPosition()).getMaterial())) {
+        				attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[1])))/100D);//50%
         			}
         			else {
-        				attribute.setBaseValue(Double.valueOf(this.config.movementspeed()[0]));//0%
-        				return;
+        				if(slow1.contains(blockStateBelow.getMaterial())) {
+        					attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[2])))/100D);//10%
+        				}
+        				else if (slow2.contains(blockStateBelow.getMaterial())) {
+        					attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[3])))/100D);//35%
+        				}
+        				else {
+        					attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[0])))/100D);//0%
+        					return;
+        				}
         			}
         		}
         	}

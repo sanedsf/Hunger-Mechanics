@@ -7,7 +7,7 @@ import net.minecraftforge.common.ForgeConfigSpec.ConfigValue;
 public class Config {
     
     private final ForgeConfigSpec spec;
-//    private final ConfigValue<Boolean> gravity;
+    private final ConfigValue<Boolean> gravity;
     private final ConfigValue<String> movementspeed;
     private final BooleanValue hunger;
     private final ConfigValue<Double> hungervalue;
@@ -67,9 +67,9 @@ public class Config {
         this.breaking = builder.define("breaking", true); 
         
         builder.push("Gravity Effect");
-//        builder.comment("Enable the global gravity effect?\nThis only disables the slow moving effect from working.");
-//        this.gravity = builder.define("gravity-effect", false);
-//        
+        builder.comment("Enable the global gravity effect?\nThis only disables the slow moving effect from working.");
+        this.gravity = builder.define("gravity-effect", false);
+        
         builder.comment("Movement speed REDUCTION of player base speed and gravity based on the formula below."
         		+ "\nSetting negative values will instead increase the speed by that percentage."
         		+ "\n50% reduction = Base player speed * (100-50)/100"
@@ -124,9 +124,9 @@ public class Config {
         return this.spec;
     }
     
-//    public boolean gravity() {
-//    	return this.gravity.get();
-//    }
+    public boolean gravity() {
+    	return this.gravity.get();
+    }
     
     public boolean breaking() {
     	return this.breaking.get();
