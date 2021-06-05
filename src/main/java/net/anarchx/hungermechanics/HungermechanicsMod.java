@@ -9,39 +9,35 @@ import org.apache.logging.log4j.LogManager;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig.Type;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
-//import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
 
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.item.Item;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.item.UseAction;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.potion.Effects;
-import net.minecraft.entity.EntityType;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.ai.attributes.Attributes;
+import net.minecraft.entity.ai.attributes.ModifiableAttributeInstance;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
-import java.util.function.Supplier;
 
 @Mod("hungermechanics")
 public class HungermechanicsMod {
@@ -49,18 +45,20 @@ public class HungermechanicsMod {
 	private static final String PROTOCOL_VERSION = "1";
 	public static final SimpleChannel PACKET_HANDLER = NetworkRegistry.newSimpleChannel(new ResourceLocation("hungermechanics", "hungermechanics"),
 			() -> PROTOCOL_VERSION, PROTOCOL_VERSION::equals, PROTOCOL_VERSION::equals);
-	public HungermechanicsModElements elements;
 	private String sPenaltyString = null;
 	private int hunger = 0;
 	private final Config config = new Config();
 	private float newExhaustion;
+	private String[][] matrix;
 	public HungermechanicsMod() {
-		elements = new HungermechanicsModElements();
 		ModLoadingContext.get().registerConfig(Type.COMMON, this.config.getSpec());
 		FMLJavaModLoadingContext.get().getModEventBus().register(this);
-		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::init);
-		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientLoad);
-		MinecraftForge.EVENT_BUS.register(new HungermechanicsModFMLBusEvents(this));
+		String[] data = this.config.customblocks();
+	    matrix = new String[data.length][]; 
+	    int r = 0;
+	    for (String row : data) {
+	        matrix[r++] = row.split(",");
+	    }
 		MinecraftForge.EVENT_BUS.addListener(this::onEntityTick);
 		MinecraftForge.EVENT_BUS.addListener(this::stopbreaking);
 		MinecraftForge.EVENT_BUS.addListener(this::onLivingPlayer);
@@ -71,50 +69,6 @@ public class HungermechanicsMod {
 		MinecraftForge.EVENT_BUS.addListener(this::itemInteract2);
 		MinecraftForge.EVENT_BUS.addListener(this::itemInteract3);
 		MinecraftForge.EVENT_BUS.addListener(this::render);
-	}
-
-	private void init(FMLCommonSetupEvent event) {
-		elements.getElements().forEach(element -> element.init(event));
-	}
-
-	public void clientLoad(FMLClientSetupEvent event) {
-		elements.getElements().forEach(element -> element.clientLoad(event));
-	}
-
-	@SubscribeEvent
-	public void registerBlocks(RegistryEvent.Register<Block> event) {
-		event.getRegistry().registerAll(elements.getBlocks().stream().map(Supplier::get).toArray(Block[]::new));
-	}
-
-	@SubscribeEvent
-	public void registerItems(RegistryEvent.Register<Item> event) {
-		event.getRegistry().registerAll(elements.getItems().stream().map(Supplier::get).toArray(Item[]::new));
-	}
-
-	@SubscribeEvent
-	public void registerEntities(RegistryEvent.Register<EntityType<?>> event) {
-		event.getRegistry().registerAll(elements.getEntities().stream().map(Supplier::get).toArray(EntityType[]::new));
-	}
-
-	@SubscribeEvent
-	public void registerEnchantments(RegistryEvent.Register<Enchantment> event) {
-		event.getRegistry().registerAll(elements.getEnchantments().stream().map(Supplier::get).toArray(Enchantment[]::new));
-	}
-
-	@SubscribeEvent
-	public void registerSounds(RegistryEvent.Register<net.minecraft.util.SoundEvent> event) {
-		elements.registerSounds(event);
-	}
-	private static class HungermechanicsModFMLBusEvents {
-		private final HungermechanicsMod parent;
-		HungermechanicsModFMLBusEvents(HungermechanicsMod parent) {
-			this.parent = parent;
-		}
-
-		@SubscribeEvent
-		public void serverLoad(FMLServerStartingEvent event) {
-			this.parent.elements.getElements().forEach(element -> element.serverLoad(event));
-		}
 	}
 	private boolean render(RenderGameOverlayEvent.Text event) { //render hunger descriptor
 		if (this.config.descriptor()) {
@@ -154,6 +108,36 @@ public class HungermechanicsMod {
 		}
 	}
 	
+	private Material[] mtslow1 = {
+			Material.CLAY,
+			Material.LEAVES,
+			Material.CLOTH_DECORATION,
+			Material.DIRT,
+			Material.CORAL,
+			Material.GRASS,
+			Material.SPONGE,
+			Material.WOOL,
+			Material.CLOTH_DECORATION,
+			Material.STRUCTURAL_AIR};
+	
+	private Material[] mtslow2 = {
+			Material.SAND,
+			Material.SNOW,
+			Material.TOP_SNOW};
+	
+	private Material[] plants = { 
+			Material.PLANT,
+			Material.WATER_PLANT,
+			Material.REPLACEABLE_PLANT,
+			Material.REPLACEABLE_WATER_PLANT,
+			Material.REPLACEABLE_FIREPROOF_PLANT,
+			Material.CACTUS,
+			Material.VEGETABLE};
+	
+	private List<Material> slow1 = Arrays.asList(mtslow1);
+	private List<Material> slow2 = Arrays.asList(mtslow2);
+	private List<Material> slowplants = Arrays.asList(plants);
+	
 	private void onEntityTick (TickEvent.PlayerTickEvent event) { // lose hunger every time the entity ticks (based on the activity)
         // Even when you are doing nothing, your food levels are still going down slowly
         // Values are based off of vanilla behavior. https://minecraft.gamepedia.com/Hunger
@@ -176,6 +160,45 @@ public class HungermechanicsMod {
         	}
         	else {
         		hunger = 0;
+        	}
+        }
+        
+        if (event.phase == TickEvent.Phase.END) {
+        	Entity entity = event.player;
+        	BlockPos posBelow = entity.blockPosition().below();
+        	BlockState blockStateBelow = entity.level.getBlockState(posBelow);
+        	boolean found = false;
+        	int percent = 0;
+        	PlayerEntity ent = (PlayerEntity) event.player;
+        	ModifiableAttributeInstance attribute = ent.getAttribute(Attributes.MOVEMENT_SPEED);
+        	for (int row = 0; row < matrix.length; row++) {
+        		if(matrix[row][0].contains(blockStateBelow.getBlock().getRegistryName().toString())) {
+        			found = true;
+        			percent=row;
+        			break;
+        		}else {
+        			found = false;
+        		}
+        	}
+        	if (found) {
+        		attribute.setBaseValue(0.1D*((100D-Double.valueOf(matrix[percent][1]))/100D));
+        	}
+        	else {
+        		if (slowplants.contains(entity.level.getBlockState(entity.blockPosition()).getMaterial())) {
+        			attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[1])))/100D);//50%
+        		}
+        		else {
+        			if(slow1.contains(blockStateBelow.getMaterial())) {
+        				attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[2])))/100D);//10%
+        			}
+        			else if (slow2.contains(blockStateBelow.getMaterial())) {
+        				attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[3])))/100D);//35%
+        			}
+        			else {
+        				attribute.setBaseValue(Double.valueOf(this.config.movementspeed()[0]));//0%
+        				return;
+        			}
+        		}
         	}
         }
 	}
@@ -202,7 +225,7 @@ public class HungermechanicsMod {
 					player.causeFoodExhaustion(newExhaustion);
 				}
 			}
-			if (player.isSprinting() && this.config.sprinting()) { //if sprinting
+			if (player.isSprinting() && this.config.sprinting()) { //if player sprinting
 				newExhaustion = this.config.sprintingvalue().floatValue();
 				player.causeFoodExhaustion(newExhaustion);
 			}
@@ -274,4 +297,5 @@ public class HungermechanicsMod {
     		}
     	}
     }
+
 }
