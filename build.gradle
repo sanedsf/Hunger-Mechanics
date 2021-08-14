@@ -12,7 +12,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '1.4'
+version = '1.6'
 group = 'net.anarchx.hungermechanics' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'hungermechanics'
 
@@ -145,7 +145,7 @@ jar {
         attributes([
             "Specification-Title": "Hunger Mechanics",
             "Specification-Vendor": "Curseforge",
-            "Specification-Version": "1.4", // We are version 1 of ourselves
+            "Specification-Version": "1.6", // We are version 1 of ourselves
             "Implementation-Title": project.name,
             "Implementation-Version": "${version}",
             "Implementation-Vendor" :"Curseforge",

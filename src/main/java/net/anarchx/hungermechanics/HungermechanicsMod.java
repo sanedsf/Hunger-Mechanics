@@ -16,6 +16,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -60,6 +61,7 @@ public class HungermechanicsMod {
 	        matrix[r++] = row.split(",");
 	    }
 		MinecraftForge.EVENT_BUS.addListener(this::onEntityTick);
+//		MinecraftForge.EVENT_BUS.addListener(this::onFovEvent);
 		MinecraftForge.EVENT_BUS.addListener(this::stopbreaking);
 		MinecraftForge.EVENT_BUS.addListener(this::onLivingPlayer);
 		MinecraftForge.EVENT_BUS.addListener(this::stopjump);
@@ -244,7 +246,7 @@ public class HungermechanicsMod {
 		}
 	}
 	
-//	private void onAttackEntity(LivingKnockBackEvent event) {
+//	private void onKnockbackEntity(LivingKnockBackEvent event) {
 //		if (event.attacker.getEntity() instanceof PlayerEntity && this.config.attack()) { //only if player attacking
 //			if (hunger == 4) { //dying
 //				event.setStrength(0);
@@ -287,16 +289,15 @@ public class HungermechanicsMod {
     
     private void doneeating(LivingEntityUseItemEvent.Finish event) { //when you finish eating something
     	float chance = new Random().nextFloat();
-    	if (event.getItem().getItem().getFoodProperties() != null ) {
-    		if (event.getItem().getItem().getFoodProperties().isMeat()) { //if item eaten was meat
+    	//if (event.getItem().getItem().getFoodProperties() != null ) { why is this here anyway, it doesnt matter if it has properties or not
+    		//if (event.getItem().getItem().getFoodProperties().isMeat()) { //if item eaten was meat
     			boolean rawfromconfig = Arrays.stream(this.config.rawmeat()).anyMatch(event.getItem().getItem().getRegistryName().toString()::equals);
-    			if (rawfromconfig || event.getItem().getItem().getRegistryName().toString().contains("raw") == true) { //if item is in defined list or has RAW in name
+    			if (rawfromconfig || event.getItem().getItem().getRegistryName().toString().contains("raw") == this.config.salmonelaraw()) { //if item is in defined list or has RAW in name
     				if (1f - chance <= 0.6f) { //60% chance to get salmonela
     					event.getEntityLiving().addEffect(new EffectInstance(Effects.HUNGER, 300, 5));
     				}
-    			}
-    		}
+    			//}
+    		//}
     	}
     }
-
 }

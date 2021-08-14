@@ -16,6 +16,7 @@ public class Config {
     private final BooleanValue breaking;
     private final BooleanValue jumping;
     private final BooleanValue salmonela;
+    private final BooleanValue salmonelaraw;
     private final ConfigValue<String> rawmeat;
     private final BooleanValue sink;
     private final BooleanValue heavyarmor;
@@ -91,7 +92,10 @@ public class Config {
         builder.comment("Having the HUNGER effect prevents the player from eating more food?"
         		+ "\nFoods considered INSTANT will work no matter what! This is intended.");
         this.salmonela  = builder.define("hungry", true);
-
+        
+        builder.comment("Foods that have RAW in their name will always be affected?");
+        this.salmonelaraw  = builder.define("checkraw", true);
+        
         builder.comment("List of RAW foods that will be considered for giving the player the HUNGER effect."
         		+ "\nexample: minecraft:tropical_fish"
         		+ "\nSeperated by semi-colon! Use JEI to find the right values.");
@@ -155,7 +159,11 @@ public class Config {
     public boolean salmonela() {
     	return this.salmonela.get();
     }
-
+    
+    public boolean salmonelaraw() {
+    	return this.salmonelaraw.get();
+    }
+    
     public String[] rawmeat() {
     	return this.rawmeat.get().split(";");
     }
