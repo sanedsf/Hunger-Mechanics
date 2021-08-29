@@ -19,6 +19,8 @@ import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.LivingKnockBackEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.common.MinecraftForge;
 
@@ -72,6 +74,8 @@ public class HungermechanicsMod {
 		MinecraftForge.EVENT_BUS.addListener(this::itemInteract3);
 		MinecraftForge.EVENT_BUS.addListener(this::render);
 	}
+	
+	@OnlyIn(Dist.CLIENT)
 	private boolean render(RenderGameOverlayEvent.Text event) { //render hunger descriptor
 		if (this.config.descriptor()) {
 			Minecraft mc = Minecraft.getInstance();
@@ -164,42 +168,40 @@ public class HungermechanicsMod {
         		hunger = 0;
         	}
         }
-        if (this.config.gravity()){
-        	if (event.phase == TickEvent.Phase.END) {
-        		Entity entity = event.player;
-        		BlockPos posBelow = entity.blockPosition().below();
-        		BlockState blockStateBelow = entity.level.getBlockState(posBelow);
-        		boolean found = false;
-        		int percent = 0;
-        		PlayerEntity ent = (PlayerEntity) event.player;
-        		ModifiableAttributeInstance attribute = ent.getAttribute(Attributes.MOVEMENT_SPEED);
-        		for (int row = 0; row < matrix.length; row++) {
-        			if(matrix[row][0].contains(blockStateBelow.getBlock().getRegistryName().toString())) {
-        				found = true;
-        				percent=row;
-        				break;
-        			}else {
-        				found = false;
-        			}
+        if (this.config.gravity() && event.player instanceof PlayerEntity && event.phase == TickEvent.Phase.END){
+        	Entity entity = event.player;
+        	BlockPos posBelow = entity.blockPosition().below();
+        	BlockState blockStateBelow = entity.level.getBlockState(posBelow);
+        	boolean found = false;
+        	int percent = 0;
+        	PlayerEntity ent = (PlayerEntity) event.player;
+        	ModifiableAttributeInstance attribute = ent.getAttribute(Attributes.MOVEMENT_SPEED);
+        	for (int row = 0; row < matrix.length; row++) {
+        		if(matrix[row][0].contains(blockStateBelow.getBlock().getRegistryName().toString())) {
+        			found = true;
+        			percent=row;
+        			break;
+        		}else {
+        			found = false;
         		}
-        		if (found) {
-        			attribute.setBaseValue(0.1D*((100D-Double.valueOf(matrix[percent][1]))/100D));
+        	}
+        	if (found) {
+        		attribute.setBaseValue(0.1D*((100D-Double.valueOf(matrix[percent][1]))/100D));
+        	}
+        	else {
+        		if (slowplants.contains(entity.level.getBlockState(entity.blockPosition()).getMaterial())) {
+        			attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[1])))/100D);//50%
         		}
         		else {
-        			if (slowplants.contains(entity.level.getBlockState(entity.blockPosition()).getMaterial())) {
-        				attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[1])))/100D);//50%
+        			if(slow1.contains(blockStateBelow.getMaterial())) {
+        				attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[2])))/100D);//10%
+        			}
+        			else if (slow2.contains(blockStateBelow.getMaterial())) {
+        				attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[3])))/100D);//35%
         			}
         			else {
-        				if(slow1.contains(blockStateBelow.getMaterial())) {
-        					attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[2])))/100D);//10%
-        				}
-        				else if (slow2.contains(blockStateBelow.getMaterial())) {
-        					attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[3])))/100D);//35%
-        				}
-        				else {
-        					attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[0])))/100D);//0%
-        					return;
-        				}
+        				attribute.setBaseValue(0.1D*((100D-Double.valueOf(this.config.movementspeed()[0])))/100D);//0%
+        				return;
         			}
         		}
         	}
