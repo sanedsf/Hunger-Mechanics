@@ -1,3 +1,9 @@
+THIS MOD IS ABANDONED
+THERE ARE NO PLANS ON RETURNING TO THIS
+IF YOU WANT TO CONTINUE THE WORK THEN BY ALL MEANS CONTACT ME!
+
+HAVE A GREAT DAY...
+
 
 Source installation information for modders
 -------------------------------------------
